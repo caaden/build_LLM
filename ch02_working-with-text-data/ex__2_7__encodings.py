@@ -13,6 +13,8 @@ print(f'Sample embedding layer: {embedding_layer.weight}')
 embedding_layer.weight has shape (6, 3). 
 One row for each of the 6 tokens in the vocabulary, and each row has 3 dimensions.
 
+The term "embeddings" is used to describe the set of numbers applied to each token in the vocabulary.
+
 Parameter containing:
 tensor([[ 0.3374, -0.1778, -0.1690],
         [ 0.9178,  1.5810,  1.3010],
