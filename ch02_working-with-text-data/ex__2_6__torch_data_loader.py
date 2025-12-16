@@ -79,7 +79,7 @@ if __name__ == "__main__":
 
     dataloader=create_dataloader_v1(
         raw_text, 
-        batch_size=1, 
+        batch_size=10, 
         max_length=4, 
         stride=1, 
         shuffle=False, 

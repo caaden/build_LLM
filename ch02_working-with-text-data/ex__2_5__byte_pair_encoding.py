@@ -12,14 +12,18 @@ text=(
 integers=tokenizer.encode(text, allowed_special={"<|endoftext|>"})  # Encoding the text
 print(f"Encoded integers: {integers}")
 
+# Note, the tiktoken encoder allows special text, like <|endoftext|>, but it must declared in the allowed_special argument.
+
 # Decoding the integers back to text
 decoded_text = tokenizer.decode(integers)  # Decoding the integers
 print(f"Decoded text: {decoded_text}")
 # %% BPE exercise
-text = "Akwirw ier"
+text = "Akw irw ier"
 # Using the GPT-2 tokenizer to encode the text
 integers = tokenizer.encode(text, allowed_special={"<|endoftext|>"})
 print(f"Encoded integers for BPE exercise: {integers}")
 decoded_text = tokenizer.decode(integers)  # Decoding the integers
 print(f"Decoded text for BPE exercise: {decoded_text}")
 
+
+# %%
