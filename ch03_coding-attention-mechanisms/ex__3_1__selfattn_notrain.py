@@ -31,6 +31,12 @@ print(f'Attention weights: {attn_weights_2_tmp}')
 # Validate that sum = 1
 print(f'Sum: {attn_weights_2_tmp.sum()}')
 '''Sum: 1.0000001192092896'''
+# Why do we normalize? Because we want to interpret the attention weights as probabilities that sum to 1.  Normalization ensures that the weights sum to 1 independent of sequence length.
+# I need to think about this in the context of probability norm, not Euclidean norm, so the sum of the weights should be 1, but the values themselves can be greater than 1 (as they are here)
+# Note, the normalized weight is highest with itself, as we expect with a dot product, but the second highest is with the third token, which is also expected as they are similar in value and thus have a high dot product. The lowest weight is with the fifth token, which is also expected as it has the lowest dot product with the query vector.
+# This makes sense intuitively provided the starting embeddings are aware of the semantic relationships between the tokens, which is often the case with pretrained embeddings. In this case, the second and third tokens are more similar to each other than to the others, which is reflected in their higher attention weights.
+# However, this is merely a coincidence in this example as the embeddings were randomly initialized and not trained to capture semantic relationships. In a real-world scenario, the embeddings would be trained to capture such relationships, and we would expect the attention weights to reflect those relationships more consistently.
+
 # %% Replace norm with softmax (sigmoid type function that is favorable for gradient based operations and for probabalistic interpretation)
 def softmax_naive(x):
   return torch.exp(x) / torch.exp(x).sum(dim=0)
