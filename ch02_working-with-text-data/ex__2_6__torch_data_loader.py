@@ -23,17 +23,18 @@ class GPTDatasetV1(Dataset):
         
         
         for i in range(0,len(token_ids)-max_length,stride):
-            # create an input chunk from the tokenized text
-            # the target chunk is the same as the input chunk but shifted by one position
-            # this is done to predict the next token in the sequence
-            # read as: input_chunk = [1, 2, 3, 4] and target_chunk = [2, 3, 4, 5]
-            # when we see the first element of the input chunk, we want to predict the second element which is the first element of the target chunk
-            # when we see the first element AND the second element of the input chunk, we want to predict the third element, 
-            # which is the second element of the target chunk... and so on
-            # THAT means that the max_length will limit the amount of context used to predict the next token
+            # create input chunks from all of the tokenized text
+            # each target chunk is the same as the input chunk but shifted by one position
+            #   this is done to predict the next token in the sequence
+            #   read as: input_chunk = [1, 2, 3, 4] and target_chunk = [2, 3, 4, 5]
+            #   when we see the first element of the input chunk, we want to predict the second element which is the first element of the target chunk
+            #   when we see the first element AND the second element of the input chunk, we want to predict the third element, 
+            #   which is the second element of the target chunk... and so on
+            #   THAT means that the max_length will limit the amount of context used to predict the next token
             input_chunk=token_ids[i:i+max_length] 
             target_chunk=token_ids[i+1:i+max_length+1]
             
+            # append the input and target chunks to the dataset
             self.input_ids.append(torch.tensor(input_chunk))
             self.target_ids.append(torch.tensor(target_chunk))
             
@@ -55,7 +56,7 @@ def create_dataloader_v1(txt,batch_size=4, max_length=256, stride=128, shuffle=T
         
         stride: int, the step size for creating overlapping chunks.  By default, it is set to 128, which means that the chunks will overlap by 128 tokens.
         
-        shuffle: bool, whether to shuffle the dataset. By default, it is set to True, which means that the dataset will be shuffled before creating batches.
+        shuffle: bool, whether to shuffle the dataset. By default, it is set to True, which means that the dataset will be shuffled before creating batches.  Note - the tokens in each chunk will not be shuffled, only the order of the chunks will be shuffled.
         This is useful for training models on large datasets, as it helps to prevent overfitting.
         
         drop_last: bool, whether to drop the last incomplete batch. By default, it is set to True, which means that the last batch will be dropped if it is not complete.
