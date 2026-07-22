@@ -17,7 +17,9 @@ attn_scores_2=torch.empty(inputs.shape[0])
 # In this case we assume the weights to generate the context factor are simply the embedding vector for each 
 # token being considered
 # Note: this current example is simply a projection of the focused embedding vector on all others.
-# As expected, the highest dot product is with itself (assuming orthonormal basis, which isn't true here)
+# As expected, the highest dot product is with itself
+# More importantly, the dot product will be determined by the similarity between the query and each input token.
+# The similarity is determined by the mapping of the input tokens to the embedding space, which is learned during training. In this case, the embeddings are randomly initialized and not trained, so the similarity is arbitrary.
 for i,x_i in enumerate(inputs):
     attn_scores_2[i]=torch.dot(x_i,query)    
 print(attn_scores_2)
@@ -33,14 +35,11 @@ print(f'Sum: {attn_weights_2_tmp.sum()}')
 '''Sum: 1.0000001192092896'''
 # Why do we normalize? Because we want to interpret the attention weights as probabilities that sum to 1.  Normalization ensures that the weights sum to 1 independent of sequence length.
 # I need to think about this in the context of probability norm, not Euclidean norm, so the sum of the weights should be 1, but the values themselves can be greater than 1 (as they are here)
-# Note, the normalized weight is highest with itself, as we expect with a dot product, but the second highest is with the third token, which is also expected as they are similar in value and thus have a high dot product. The lowest weight is with the fifth token, which is also expected as it has the lowest dot product with the query vector.
-# This makes sense intuitively provided the starting embeddings are aware of the semantic relationships between the tokens, which is often the case with pretrained embeddings. In this case, the second and third tokens are more similar to each other than to the others, which is reflected in their higher attention weights.
-# However, this is merely a coincidence in this example as the embeddings were randomly initialized and not trained to capture semantic relationships. In a real-world scenario, the embeddings would be trained to capture such relationships, and we would expect the attention weights to reflect those relationships more consistently.
 
 # %% Replace norm with softmax (sigmoid type function that is favorable for gradient based operations and for probabalistic interpretation)
 def softmax_naive(x):
   return torch.exp(x) / torch.exp(x).sum(dim=0)
-
+# note the softmax normalized attention weights are different than the simple normalization above, but they still sum to 1      
 attn_weights_2=softmax_naive(attn_scores_2)
 print(f'Attention weights: {attn_weights_2}')
 print(f'Sum of attention weights: {attn_weights_2.sum()}')
@@ -76,7 +75,8 @@ print(attn_scores)
 # %% Compute the softtmax to normalize
 attn_weights=torch.softmax(attn_scores,dim=-1) # (-1) argument to evaluate over the last dimension of the tensor (row,col) so cols
 print(f'Attention Weights: {attn_weights}')
-'''Attention Weights: tensor([[0.2098, 0.2006, 0.1981, 0.1242, 0.1220, 0.1452],
+'''Attention Weights: tensor([
+        [0.2098, 0.2006, 0.1981, 0.1242, 0.1220, 0.1452],
         [0.1385, 0.2379, 0.2333, 0.1240, 0.1082, 0.1581],
         [0.1390, 0.2369, 0.2326, 0.1242, 0.1108, 0.1565],
         [0.1435, 0.2074, 0.2046, 0.1462, 0.1263, 0.1720],
@@ -84,7 +84,7 @@ print(f'Attention Weights: {attn_weights}')
         [0.1385, 0.2184, 0.2128, 0.1420, 0.0988, 0.1896]])'''
 print("All row sums:", attn_weights.sum(dim=-1))
 '''All row sums: tensor([1.0000, 1.0000, 1.0000, 1.0000, 1.0000, 1.0000])'''
-# %% Simple matrix multiplication yields the desired output tensor
+# %% Simple matrix multiplication yields the output tensor that is the weighted sum of the input vectors based on the attention weights.  The proportional weights determine the contribution of each input vector to the output tensor.
 all_context_vecs = attn_weights @ inputs
 print(f'Output Tensor: {all_context_vecs}')
 '''Output Tensor: tensor([[0.4421, 0.5931, 0.5790],

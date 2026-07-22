@@ -47,6 +47,12 @@ if __name__ == "__main__":
     # Add the positional embeddings to the input embeddings
     embedded_inputs = embedded_inputs + pos_embeddings
     print("Embedded inputs with positional encodings shape:\n", embedded_inputs.shape)
+
+    # More on positional encodings:
+
+    # Each position has its own vector, and that per-position vector is reused across every chunk and every batch. So position 0's vector is identical everywhere, position 1's vector is identical everywhere, but position 0 and position 1 have different vectors — that difference is the entire point, since it's the only signal distinguishing the slots.
+
+    # So the full picture for one training step: a chunk of max_length tokens → each token ID looks up its embedding vector of size output_dim → each slot index (0 through max_length-1) looks up its position vector, also size output_dim → the two are added elementwise, slot by slot. Every chunk in the batch uses the same position table, and the same table is used at inference too.
     
     
     
