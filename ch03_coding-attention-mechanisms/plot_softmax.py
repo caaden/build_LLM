@@ -21,9 +21,13 @@ ax1.legend()
 ax1.grid(True, alpha=0.3)
 
 # --- Panel 2: actual attention scores vs softmax weights from the exercise ---
-token_labels = ["Your\n(x1)", "journey\n(x2)", "starts\n(x3)", "with\n(x4)", "one\n(x5)", "step\n(x6)"]
-attn_scores = torch.tensor([0.9544, 1.4950, 1.4754, 0.8434, 0.7070, 1.0865])
+# token_labels = ["Your\n(x1)", "journey\n(x2)", "starts\n(x3)", "with\n(x4)", "one\n(x5)", "step\n(x6)"]
+# attn_scores = torch.tensor([0.9544, 1.4950, 1.4754, 0.8434, 0.7070, 1.0865])
+token_labels = ["the\n(x1)", "cat\n(x2)", "sat\n(x3)", "down\n(x4)"]
+attn_scores = torch.tensor([0, 1, 1, 2], dtype=torch.float32)  # attention scores for each token
+
 softmax_weights = torch.softmax(attn_scores, dim=0).numpy()
+print("Softmax weights:", softmax_weights)
 naive_weights = (attn_scores / attn_scores.sum()).numpy()
 raw_scores = attn_scores.numpy()
 
