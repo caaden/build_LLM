@@ -8,20 +8,6 @@ inputs = torch.tensor(
    [0.77, 0.25, 0.10], # one      (x^5)
    [0.05, 0.80, 0.55]] # step     (x^6)
 )
-<<<<<<< HEAD
-# %%
-x_2=inputs[1]
-d_in=inputs.shape[1] # number of input features
-d_out=2 # number of output features
-
-# %% Initialize weight matrices
-torch.manual_seed(123)
-# torch.rand to initialize the weight matrices
-# torch.nn.Parameter to make them trainable
-W_query=torch.nn.Parameter(torch.rand(d_in,d_out),requires_grad=False)
-W_key=torch.nn.Parameter(torch.rand(d_in,d_out),requires_grad=False)
-W_value=torch.nn.Parameter(torch.rand(d_in,d_out),requires_grad=False)
-=======
 print("Input tensor: ", inputs)
 # %%
 x_2=inputs[1]
@@ -70,6 +56,8 @@ attn_scores=queries @ keys.T
 print("Attention scores between all queries and keys:\n", attn_scores)
 
 # %% Compute normalized attention scores
+# %% Scale the attention scores by the square root of the key dimension to address the vanishing gradient problem and improve training stability
+
 dk=keys.shape[-1]
 scaled_attn_scores=attn_scores/torch.sqrt(torch.tensor(dk,dtype=torch.float32))
 print("Scaled attention scores:\n", scaled_attn_scores)
@@ -83,5 +71,4 @@ print("Attention weights:\n", attn_weights)
 context_vectors=attn_weights @ values
 print("Context vectors:\n", context_vectors)
 
-# %%
->>>>>>> 179eecd1ae36239529150b144be5627c60a56568
+# %% 
