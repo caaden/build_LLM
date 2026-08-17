@@ -25,7 +25,6 @@ class SelfAttention_v1(nn.Module):
     """
     def __init__(self, din, dout):
         super().__init__()
-        torch.manual_seed(123)
         self.W_query = nn.Parameter(torch.rand(din, dout))
         self.W_key = nn.Parameter(torch.rand(din, dout))
         self.W_value = nn.Parameter(torch.rand(din, dout))
@@ -48,7 +47,6 @@ class SelfAttention_v2(nn.Module):
     """
     def __init__(self, din, dout,qkv_bias=False):
         super().__init__()
-        torch.manual_seed(789)
         self.W_query = nn.Linear(din, dout, bias=qkv_bias)
         self.W_key = nn.Linear(din, dout, bias=qkv_bias)
         self.W_value = nn.Linear(din, dout, bias=qkv_bias)
@@ -74,8 +72,9 @@ class CausalAttention(nn.Module):
         self.W_query = nn.Linear(din, dout, bias=qkv_bias)
         self.W_key = nn.Linear(din, dout, bias=qkv_bias)
         self.W_value = nn.Linear(din, dout, bias=qkv_bias)
+        # Add dropout layer to prevent overfitting
         self.dropout = nn.Dropout(dropout)
-        
+        # Use a register_buffer to tell PyTorch to move the mask to the appropriate device (CPU/GPU) when the model is moved but do not treat it as a learnable parameter. The mask is a boolean tensor that indicates which positions in the attention scores should be masked (set to -inf) to prevent attending to future tokens.
         self.register_buffer("mask", torch.triu(torch.ones(context_length, context_length), diagonal=1).bool())
     
     def forward(self,x):
@@ -85,17 +84,35 @@ class CausalAttention(nn.Module):
         values = self.W_value(x)
         
         attn_scores = queries @ keys.transpose(1,2)
+        # replace the masked positions in the attention scores with -inf to prevent attending to future tokens
         attn_scores.masked_fill_(
             self.mask.bool()[:num_tokens,:num_tokens], -torch.inf)
+        # note, the softmax function will automatically handle the -inf values by assigning them a probability of 0, effectively ignoring them in the attention computation.
         attn_weights=torch.softmax(
             attn_scores/keys.shape[-1]**0.5, dim=-1)
-        
+        # apply dropout to the attention weights to prevent overfitting
         attn_weights=self.dropout(attn_weights)
-        
+        # compute the context vector as a weighted sum of the value vectors
         context_vec=attn_weights@values
 
         return context_vec
-        
+
+class MultiHeadAttentionWrapper(nn.Module):
+    '''
+    This class implements multi-head attention by creating multiple instances of the CausalAttention class and concatenating their outputs. It allows for parallel attention computations across different subspaces of the input features.
+    '''
+    def __init__(self, d_in, d_out, context_length, dropout, num_heads, qkv_bias=False):
+        super().__init__()
+        self.heads=nn.ModuleList(
+            [
+                CausalAttention(
+                    d_in,d_out,context_length, dropout, qkv_bias
+                ) for _ in range(num_heads)
+            ]
+        )
+    def forward(self,x):
+        # Concatenate the outputs of all attention heads along the last dimension to form the final context vector. Each head processes the input independently, and their outputs are combined to capture diverse aspects of the input features.
+        return torch.cat([head(x) for head in self.heads], dim=-1)
 
 if __name__ == "__main__":
     torch.manual_seed(123)
@@ -104,6 +121,24 @@ if __name__ == "__main__":
     context_vec=sa_v1(inputs)
     print("Context vector V1:\n", context_vec)
 
+    torch.manual_seed(789)
     sa_v2=SelfAttention_v2(din, dout)
     context_vec=sa_v2(inputs)
     print("Context vector V2:\n", context_vec)
+
+    batch=torch.stack([inputs, inputs], dim=0)
+    torch.manual_seed(123)
+    context_length=batch.shape[1]
+    ca=CausalAttention(din, dout, context_length, 0.0)
+    context_vecs=ca(batch)
+    print("Context vector Causal:\n", context_vecs)
+
+    torch.manual_seed(123)
+    context_length=batch.shape[1]
+    d_in, d_out = 3,1
+    mha=MultiHeadAttentionWrapper(
+        d_in, d_out, context_length, 0.0, num_heads=2
+    )
+    context_vecs=mha(batch)
+    print("Context vector Multi-Head:\n", context_vecs)
+
