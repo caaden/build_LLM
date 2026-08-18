@@ -116,11 +116,13 @@ class MultiHeadAttentionWrapper(nn.Module):
 
 class MultiHeadAttention(nn.Module):
     def __init__(self, d_in, d_out, context_length, dropout, num_heads, qkv_bias=False):
+        # Functions the same as the MultiHeadAttentionWrapper class, but uses a single linear layer to project the concatenated outputs of all heads back to the desired output dimension. This allows for more efficient computation by replacing looping multiplications with a single matrix multiplication for keys, queries, and values.
         super().__init__()
+        # Ensure that the output dimension is divisible by the number of heads to allow for equal distribution of features across heads. Each head will have a dimension of d_out / num_heads.
         assert (d_out % num_heads ==0), "d_out must be divisible by num_heads"
+        self.head_dim=d_out // num_heads
         self.d_out=d_out
         self.num_heads=num_heads
-        self.head_dim=d_out
         self.W_query=nn.Linear(d_in, d_out, bias=qkv_bias)
         self.W_key=nn.Linear(d_in, d_out, bias=qkv_bias)
         self.W_value=nn.Linear(d_in,d_out, bias=qkv_bias)
@@ -134,31 +136,30 @@ class MultiHeadAttention(nn.Module):
         queries=self.W_query(x)
         values=self.W_value(x)
 
+        # Use the view operation to reshape the tensors into a shape that separates the heads and the head dimensions. The new shape is (batch_size, num_tokens, num_heads, head_dim), where head_dim is d_out divided by num_heads. This allows each head to attend to different parts of the input features independently.
         keys=keys.view(b, num_tokens, self.num_heads, self.head_dim)
         values=values.view(b, num_tokens, self.num_heads, self.head_dim)
         queries=queries.view(b, num_tokens, self.num_heads, self.head_dim)
-
+        # Transpose the tensors to bring the num_heads dimension before the num_tokens dimension, resulting in a shape of (batch_size, num_heads, num_tokens, head_dim). This arrangement is necessary for the subsequent attention score computation, where each head will compute attention scores independently for each token in the sequence.
         keys=keys.transpose(1,2)
         queries=queries.transpose(1,2)
         values=values.transpose(1,2)
-
+        # Compute the attention scores
         attn_scores=queries @ keys.transpose(2,3)
+        # Mask the attention scores to prevent attending to future tokens. 
         mask_bool=self.mask.bool()[:num_tokens, :num_tokens]
-
         attn_scores.masked_fill_(mask_bool,-torch.inf)
-
+        # Apply the softmax function to the attention scores to obtain the attention weights.   
         attn_weights=torch.softmax(
             attn_scores/keys.shape[-1]**0.5, dim=-1
         )
-
+        # Apply dropout to the attention weights to prevent overfitting. The dropout layer randomly sets a fraction of the attention weights to zero during training, which helps to regularize the model and improve generalization.
         attn_weights=self.dropout(attn_weights)
-
+        # Compute the context vector as a weighted sum of the value vectors. 
         context_vec=(attn_weights @ values).transpose(1,2)
-
+        # Use the contiguous() method to ensure that the context vector is stored in a contiguous block of memory, which is necessary for the subsequent view operation. The view operation reshapes the context vector back to its original shape of (batch_size, num_tokens, d_out) by combining the num_heads and head_dim dimensions.
         context_vec=context_vec.contiguous().view(b, num_tokens, self.d_out)
-
         context_vec=self.out_proj(context_vec)
-
         return context_vec
 
 if __name__ == "__main__":
@@ -188,4 +189,13 @@ if __name__ == "__main__":
     )
     context_vecs=mha(batch)
     print("Context vector Multi-Head:\n", context_vecs)
+
+    torch.manual_seed(123)
+    batch_size, context_length, d_in = batch.shape
+    d_out = 2
+    mha=MultiHeadAttention(
+        d_in, d_out, context_length, 0.0, num_heads=2
+    )
+    context_vecs=mha(batch)
+    print("Context vector Multi-Head with Linear Projection:\n", context_vecs)
 
