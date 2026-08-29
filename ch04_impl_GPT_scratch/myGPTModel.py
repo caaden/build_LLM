@@ -54,28 +54,16 @@ class DummyTransformerBlock(nn.Module):
     def forward(self,x):
         return x
 
-class DummyLayerNorm(nn.Module):
-    def __init__(self, normalized_shape, eps=1e-5):
+class LayerNorm(nn.Module):
+    def __init__(self, emb_dim):
         super().__init__()
+        self.eps=1e-5
+        self.scale=nn.Parameter(torch.ones(emb_dim))
+        self.shift=nn.Parameter(torch.zeros(emb_dim))
     def forward(self,x):
-        return x
-
-#%% Tokenize input text and create a batch
-tokenizer = tiktoken.get_encoding("gpt2")
-batch=[]
-txt1="Every effort moves you"
-txt2="Every day holds a"
-batch.append(torch.tensor(tokenizer.encode(txt1)))
-batch.append(torch.tensor(tokenizer.encode(txt2)))
-batch=torch.stack(batch, dim=0)
-print('batch: ', batch)
-
-# %% Initialize dummy GPT model
-torch.manual_seed(123)
-model=DummyGPTModel(GPT_CONFIG_124M)
-logits=model(batch)
-print('Output shape:', logits.shape)
-print('Logits:', logits)
+        mean=torch.mean(x, dim=-1, keepdim=True)
+        var=torch.var(x, dim=-1, keepdim=True,unbiased=False)
+        norm_x=(x-mean)/(torch.sqrt(var+self.eps))
+        return self.scale*norm_x+self.shift
 
 
-# %%
