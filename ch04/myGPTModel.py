@@ -14,6 +14,16 @@ GPT_CONFIG_124M = {
     "qkv_bias": False
 }
 
+class GELU(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+    def forward(self,x):
+        y = 0.5 * x * (1 + torch.tanh(torch.sqrt(torch.tensor(2/torch.pi)) * 
+                                      (x+0.044715 * torch.pow(x,3))))
+        
+        return y
+
 #%% Dummy GPT Model
 class DummyGPTModel(nn.Module):
     '''
@@ -55,6 +65,10 @@ class DummyTransformerBlock(nn.Module):
         return x
 
 class LayerNorm(nn.Module):
+    '''
+    Layer Normalization module.
+    Intent: Normalizes each token's activation vector to zero mean and unit variance (with learned scale/shift), keeping activations at a stable scale across layers and smoothing optimization The normalization is performed by subtracting the mean and dividing by the standard deviation of the inputs, followed by scaling and shifting using learnable parameters.
+    Benefits: Layer normalization improves the convergence of training, especially in deep networks, by ensuring that the inputs to each layer have a consistent distribution.'''
     def __init__(self, emb_dim):
         super().__init__()
         self.eps=1e-5
@@ -65,5 +79,21 @@ class LayerNorm(nn.Module):
         var=torch.var(x, dim=-1, keepdim=True,unbiased=False)
         norm_x=(x-mean)/(torch.sqrt(var+self.eps))
         return self.scale*norm_x+self.shift
+
+class FeedForward(nn.Module):
+    '''
+    Feed Forward Network with GELU activation.
+    Intent: This class implements a feed-forward neural network layer commonly used in transformer architectures. It consists of two linear transformations with a GELU activation function in between. The first linear layer expands the input dimension to four times its size, and the second linear layer projects it back to the original dimension. This design allows for complex feature transformations while maintaining the original input size for residual connections.
+    Benefits: The use of GELU activation provides smoother gradients and better performance compared to traditional activation functions like ReLU. The expansion and contraction of dimensions allow the model to learn richer representations, enhancing its ability to capture complex patterns in the data.
+    '''
+    def __init__(self,cfg):
+        super().__init__()
+        self.layers=nn.Sequential(
+            nn.Linear(cfg['emb_dim'],4*cfg['emb_dim']),
+            GELU(),
+            nn.Linear(4*cfg['emb_dim'],cfg['emb_dim'])
+        )
+    def forward(self,x):
+        return self.layers(x)
 
 
