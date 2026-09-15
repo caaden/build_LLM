@@ -5,13 +5,13 @@ import tiktoken
 
 #%% Config Dictionary
 GPT_CONFIG_124M = {
-    "vocab_size": 50257, 
-    "context_length": 1024,
-    "emb_dim": 768,
-    "n_heads": 12,
-    "n_layers": 12,
-    "drop_rate": 0.1,
-    "qkv_bias": False
+    "vocab_size": 50257, # GPT-2 vocabulary size: the number of unique tokens in the model's vocabulary 
+    "context_length": 1024, # the maximum number of tokens that the model can process in a single input sequence
+    "emb_dim": 768, # the dimensionality of the token embeddings and hidden states in the model
+    "n_heads": 12, # the number of attention heads in the multi-head self-attention mechanism
+    "n_layers": 12, # the number of transformer blocks (layers) in the model
+    "drop_rate": 0.1, # the dropout rate used for regularization during training
+    "qkv_bias": False # whether to include bias terms in the query, key, and value projections of the attention mechanism
 }
 
 #%% Dummy GPT Model
