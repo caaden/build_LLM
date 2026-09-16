@@ -111,8 +111,8 @@ class MultiHeadAttentionWrapper(nn.Module):
             ]
         )
     def forward(self,x):
-        # Concatenate the outputs of all attention heads along the last dimension to form the final context vector. Each head processes the input independently, and their outputs are combined to capture diverse aspects of the input features.
-        return torch.cat([head(x) for head in self.heads], dim=-1)
+        # Concatenate the outputs of all attention heads along the last dimension to form the final context vector. Each head processes the input independently, and their outputs are combined to capture diverse aspects of the input features.  
+        return torch.cat([head(x) for head in self.heads], dim=-1) # Concatenate along the last dimension, which is the feature dimension. This results in a context vector that has a dimension of d_out * num_heads, where each head contributes d_out features.
 
 class MultiHeadAttention(nn.Module):
     def __init__(self, d_in, d_out, context_length, dropout, num_heads, qkv_bias=False):
