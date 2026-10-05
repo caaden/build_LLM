@@ -16,29 +16,30 @@ def generate_text_simple(model,idx,max_new_tokens,context_size):
 
     return idx
 
-#%% Initialization
-tokenizer=tiktoken.get_encoding("gpt2")
-start_context="Hello, I am"
-encoded=tokenizer.encode(start_context)
-print("Encoded input:",encoded)
-encoded_tensor=torch.tensor(encoded).unsqueeze(0) #batch size 1
-print("Encoded tensor shape:",encoded_tensor.shape)
+if __name__ == "__main__":
+    #%% Initialization
+    tokenizer=tiktoken.get_encoding("gpt2")
+    start_context="Hello, I am"
+    encoded=tokenizer.encode(start_context)
+    print("Encoded input:",encoded)
+    encoded_tensor=torch.tensor(encoded).unsqueeze(0) #batch size 1
+    print("Encoded tensor shape:",encoded_tensor.shape)
 
-# %% Generate text
-torch.manual_seed(123) #note:this has downstream effects on the generated text
-model=GPTModel(GPT_CONFIG_124M)
-model.eval()
-out=generate_text_simple(
-    model=model,
-    idx=encoded_tensor,
-    max_new_tokens=6,
-    context_size=GPT_CONFIG_124M['context_length']
-)
-print("Output:" ,out)
-print("Output length:",out.shape[1])
+    # %% Generate text
+    torch.manual_seed(123) #note:this has downstream effects on the generated text
+    model=GPTModel(GPT_CONFIG_124M)
+    model.eval()
+    out=generate_text_simple(
+        model=model,
+        idx=encoded_tensor,
+        max_new_tokens=6,
+        context_size=GPT_CONFIG_124M['context_length']
+    )
+    print("Output:" ,out)
+    print("Output length:",out.shape[1])
 
-# %% Decode the output of an untrained model... gibberish!
-decoded_output=tokenizer.decode(out[0].tolist())
-print("Decoded output:",decoded_output)
+    # %% Decode the output of an untrained model... gibberish!
+    decoded_output=tokenizer.decode(out[0].tolist())
+    print("Decoded output:",decoded_output)
 
-# %%
+    # %%
