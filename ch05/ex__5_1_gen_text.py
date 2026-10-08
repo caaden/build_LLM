@@ -83,6 +83,32 @@ def ex_5_1_1():
 
     print("Output text:\n",token_ids_to_text(token_ids,tokenizer))
 
+def set_data_loaders(text_data,train_ratio, GPT_CONFIG_124M):
+    split_idx=int(train_ratio*len(text_data))
+    train_data=text_data[:split_idx]
+    val_data=text_data[split_idx:]
+
+    train_loader=create_dataloader_v1(
+        train_data,
+        batch_size=2,
+        max_length=GPT_CONFIG_124M["context_length"],
+        stride=GPT_CONFIG_124M["context_length"],
+        drop_last=True,
+        shuffle=True,
+        num_workers=0
+    )
+
+    val_loader=create_dataloader_v1(
+            val_data,
+            batch_size=2,
+            max_length=GPT_CONFIG_124M["context_length"],
+            stride=GPT_CONFIG_124M["context_length"],
+            drop_last=False,
+            shuffle=False,
+            num_workers=0
+        )
+    return train_loader, val_loader
+
 def ex_5_1_2(OPTION):
     model, GPT_CONFIG_124M=init_gpt_model()
     model.eval()
@@ -167,34 +193,9 @@ def ex_5_1_3():
     print("Characters: ",total_characters)
     print("Tokens: ",total_tokens)
 
-    train_ratio=0.9
-    split_idx=int(train_ratio*len(text_data))
-    train_data=text_data[:split_idx]
-    val_data=text_data[split_idx:]
-
     model, GPT_CONFIG_124M=init_gpt_model()
-    torch.manual_seed(123)
-
-    train_loader=create_dataloader_v1(
-        train_data,
-        batch_size=2,
-        max_length=GPT_CONFIG_124M["context_length"],
-        stride=GPT_CONFIG_124M["context_length"],
-        drop_last=True,
-        shuffle=True,
-        num_workers=0
-    )
-
-    val_loader=create_dataloader_v1(
-            val_data,
-            batch_size=2,
-            max_length=GPT_CONFIG_124M["context_length"],
-            stride=GPT_CONFIG_124M["context_length"],
-            drop_last=False,
-            shuffle=False,
-            num_workers=0
-        )
-
+    train_ratio=0.9
+    train_loader, val_loader=set_data_loaders(text_data,train_ratio, GPT_CONFIG_124M)
     
     print("Train loader:")
     for x, y in train_loader:
@@ -216,6 +217,6 @@ def ex_5_1_3():
 
 # %% main function
 if __name__=="__main__":
-    # OPTION="Cross Entropy"
+    OPTION="Cross Entropy"
     # ex_5_1_2(OPTION)
     ex_5_1_3()
