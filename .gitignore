@@ -1,3 +1,5 @@
 # PyTorch model checkpoints (large binary files)
 *.pth
 *.pyc
+*.zip
+*.ckpt*

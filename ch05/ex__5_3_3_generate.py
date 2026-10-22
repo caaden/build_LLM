@@ -1,6 +1,7 @@
 import tiktoken
 import torch
 
+import argparse
 import sys
 from pathlib import Path
 # Add the parent directory of the current file to the system path
@@ -36,8 +37,14 @@ def generate(model, idx, max_new_tokens, context_size, temp=0, top_k=None, eos_i
 
 if __name__=="__main__":
 
+    # TRAIN mode: 1 = train from scratch, 2 = load saved model, 3 = load and continue training
+    parser=argparse.ArgumentParser()
+    parser.add_argument("--train",type=int,choices=[1,2,3],default=1,
+                        help="1: train from scratch, 2: load saved model, 3: load and continue training")
+    args=parser.parse_args()
+
     torch.manual_seed(123)
-    TRAIN=3
+    TRAIN=args.train
     device=torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model,GPT_CONFIG_124M = init_gpt_model()
     model.to(device)
