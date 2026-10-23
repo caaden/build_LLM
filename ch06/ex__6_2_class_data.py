@@ -37,8 +37,7 @@ df = pd.read_csv(datafilepath, sep='\t', header=None, names=['label', 'text'])
 print(df.head())
 print(df["label"].value_counts()) # Count the number of spam and ham messages
 
-#%% Create a balanced dataset
-
+#%% Create a balanced dataset so that the number of spam and ham messages are equal
 def create_balanced_dataset(df):
     num_spam=df[df["label"]=="spam"].shape[0]
     ham_subset=df[df["label"]=="ham"].sample(num_spam,random_state=123)
@@ -47,3 +46,21 @@ def create_balanced_dataset(df):
 
 balanced_df=create_balanced_dataset(df)
 print(balanced_df['label'].value_counts())
+
+#%% Split the dataset
+def random_split(df, train_frac, val_frac):
+    df = df.sample(frac=1, random_state=123).reset_index(drop=True) # Shuffle the dataset
+    train_end=int(len(df)*train_frac) # Calculate the index for the end of the training set
+    val_end=train_end+int(len(df)*val_frac) # Calculate the index for the end of the validation set
+
+    train_df=df[:train_end] # Get the training set
+    val_df=df[train_end:val_end] # Get the validation set
+    test_df=df[val_end:] # Get the test set
+
+    return train_df, val_df, test_df
+
+train_df, val_df, test_df = random_split(balanced_df,0.7, 0.1)
+
+train_df.to_csv('train.csv',index=None)
+val_df.to_csv('val.csv',index=None)
+test_df.to_csv('test.csv',index=None)
