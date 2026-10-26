@@ -46,6 +46,8 @@ def create_balanced_dataset(df):
 
 balanced_df=create_balanced_dataset(df)
 print(balanced_df['label'].value_counts())
+balanced_df["label"] = balanced_df["label"].map({"ham": 0, "spam": 1})
+
 
 #%% Split the dataset
 def random_split(df, train_frac, val_frac):
